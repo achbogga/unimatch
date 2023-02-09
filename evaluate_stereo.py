@@ -19,6 +19,26 @@ from utils.utils import InputPadder
 from utils.file_io import write_pfm
 from utils.visualization import vis_disparity
 
+from contextlib import contextmanager
+import time
+import logging
+
+
+@contextmanager
+def _log_time_usage(prefix=""):
+	'''log the time usage in a code block
+	prefix: the prefix text to show
+	'''
+	start = time.time()
+	try:
+		yield
+	finally:
+		end = time.time()
+		elapsed_seconds = float("%.2f" % (end - start))
+		logging.debug('%s: elapsed seconds: %s', prefix, elapsed_seconds)
+		print('elapsed seconds', prefix, elapsed_seconds)
+
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
@@ -762,62 +782,62 @@ def inference_stereo(model,
 
         left_name = left_filenames[i]
         right_name = right_filenames[i]
+        with _log_time_usage('Unimatch Inference Time in seconds: '):
+            left = np.array(Image.open(left_name).convert('RGB')).astype(np.float32)
+            right = np.array(Image.open(right_name).convert('RGB')).astype(np.float32)
+            sample = {'left': left, 'right': right}
 
-        left = np.array(Image.open(left_name).convert('RGB')).astype(np.float32)
-        right = np.array(Image.open(right_name).convert('RGB')).astype(np.float32)
-        sample = {'left': left, 'right': right}
+            sample = val_transform(sample)
 
-        sample = val_transform(sample)
+            left = sample['left'].to(device).unsqueeze(0)  # [1, 3, H, W]
+            right = sample['right'].to(device).unsqueeze(0)  # [1, 3, H, W]
 
-        left = sample['left'].to(device).unsqueeze(0)  # [1, 3, H, W]
-        right = sample['right'].to(device).unsqueeze(0)  # [1, 3, H, W]
+            nearest_size = [int(np.ceil(left.size(-2) / padding_factor)) * padding_factor,
+                            int(np.ceil(left.size(-1) / padding_factor)) * padding_factor]
 
-        nearest_size = [int(np.ceil(left.size(-2) / padding_factor)) * padding_factor,
-                        int(np.ceil(left.size(-1) / padding_factor)) * padding_factor]
+            # resize to nearest size or specified size
+            inference_size = nearest_size if fixed_inference_size is None else fixed_inference_size
 
-        # resize to nearest size or specified size
-        inference_size = nearest_size if fixed_inference_size is None else fixed_inference_size
+            ori_size = left.shape[-2:]
+            if inference_size[0] != ori_size[0] or inference_size[1] != ori_size[1]:
+                left = F.interpolate(left, size=inference_size,
+                                    mode='bilinear',
+                                    align_corners=True)
+                right = F.interpolate(right, size=inference_size,
+                                    mode='bilinear',
+                                    align_corners=True)
 
-        ori_size = left.shape[-2:]
-        if inference_size[0] != ori_size[0] or inference_size[1] != ori_size[1]:
-            left = F.interpolate(left, size=inference_size,
-                                 mode='bilinear',
-                                 align_corners=True)
-            right = F.interpolate(right, size=inference_size,
-                                  mode='bilinear',
-                                  align_corners=True)
+            with torch.no_grad():
+                if pred_bidir_disp:
+                    new_left, new_right = hflip(right), hflip(left)
+                    left = torch.cat((left, new_left), dim=0)
+                    right = torch.cat((right, new_right), dim=0)
 
-        with torch.no_grad():
-            if pred_bidir_disp:
-                new_left, new_right = hflip(right), hflip(left)
-                left = torch.cat((left, new_left), dim=0)
-                right = torch.cat((right, new_right), dim=0)
+                if pred_right_disp:
+                    left, right = hflip(right), hflip(left)
+
+                pred_disp = model(left, right,
+                                attn_type=attn_type,
+                                attn_splits_list=attn_splits_list,
+                                corr_radius_list=corr_radius_list,
+                                prop_radius_list=prop_radius_list,
+                                num_reg_refine=num_reg_refine,
+                                task='stereo',
+                                )['flow_preds'][-1]  # [1, H, W]
+
+            if inference_size[0] != ori_size[0] or inference_size[1] != ori_size[1]:
+                # resize back
+                pred_disp = F.interpolate(pred_disp.unsqueeze(1), size=ori_size,
+                                        mode='bilinear',
+                                        align_corners=True).squeeze(1)  # [1, H, W]
+                pred_disp = pred_disp * ori_size[-1] / float(inference_size[-1])
+
+            save_name = os.path.join(output_path, os.path.basename(left_name)[:-4] + '_disp.png')
 
             if pred_right_disp:
-                left, right = hflip(right), hflip(left)
+                pred_disp = hflip(pred_disp)
 
-            pred_disp = model(left, right,
-                              attn_type=attn_type,
-                              attn_splits_list=attn_splits_list,
-                              corr_radius_list=corr_radius_list,
-                              prop_radius_list=prop_radius_list,
-                              num_reg_refine=num_reg_refine,
-                              task='stereo',
-                              )['flow_preds'][-1]  # [1, H, W]
-
-        if inference_size[0] != ori_size[0] or inference_size[1] != ori_size[1]:
-            # resize back
-            pred_disp = F.interpolate(pred_disp.unsqueeze(1), size=ori_size,
-                                      mode='bilinear',
-                                      align_corners=True).squeeze(1)  # [1, H, W]
-            pred_disp = pred_disp * ori_size[-1] / float(inference_size[-1])
-
-        save_name = os.path.join(output_path, os.path.basename(left_name)[:-4] + '_disp.png')
-
-        if pred_right_disp:
-            pred_disp = hflip(pred_disp)
-
-        disp = pred_disp[0].cpu().numpy()
+            disp = pred_disp[0].cpu().numpy()
 
         if save_pfm_disp:
             save_name_pfm = save_name[:-4] + '.pfm'
