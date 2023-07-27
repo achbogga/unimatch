@@ -4,7 +4,7 @@
 # gmstereo-scale2-regrefine3 model
 CUDA_VISIBLE_DEVICES=0 python3 main_stereo.py \
 --inference_dir /home/aboggaram/data/Octiva/stereo_test_raw_images \
---inference_size 320 480 \
+--inference_size 1024 1280 \
 --output_path /home/aboggaram/data/Octiva/unimatch_stereo_test_output \
 --resume pretrained/gmstereo-scale2-regrefine3-resumeflowthings-middleburyfthighres-a82bec03.pth \
 --padding_factor 32 \

@@ -2,3 +2,9 @@
 __pycache__
 
 pretrained
+*.zip
+*.tar.gz
+*.pth
+*.pt
+*.ckpt
+*.onnx
