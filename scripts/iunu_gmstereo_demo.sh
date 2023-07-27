@@ -5,8 +5,8 @@
 CUDA_VISIBLE_DEVICES=0 python3 main_stereo.py \
 --inference_dir /home/aboggaram/data/Octiva/stereo_test_raw_images \
 --inference_size 1024 1280 \
---output_path /home/aboggaram/data/Octiva/unimatch_stereo_test_output \
---resume pretrained/gmstereo-scale2-regrefine3-resumeflowthings-middleburyfthighres-a82bec03.pth \
+--output_path /home/aboggaram/data/Octiva/unimatch_stereo_test_output_mix_data_model \
+--resume /home/aboggaram/projects/unimatch/pretrained/gmstereo-scale2-regrefine3-resumeflowthings-mixdata-train320x640-ft640x960-e4e291fd.pth \
 --padding_factor 32 \
 --upsample_factor 4 \
 --num_scales 2 \
