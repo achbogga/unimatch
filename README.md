@@ -15,12 +15,13 @@
     ·
     <a href="http://www.cvlibs.net/">Andreas Geiger</a>
   </p>
+  <h3 align="center">TPAMI 2023</h3>
   <h3 align="center"><a href="https://arxiv.org/abs/2211.05783">Paper</a> | <a href="https://haofeixu.github.io/slides/20221228_synced_unimatch.pdf">Slides</a> | <a href="https://haofeixu.github.io/unimatch/">Project Page</a> | <a href="https://colab.research.google.com/drive/1r5m-xVy3Kw60U-m5VB-aQ98oqqg_6cab?usp=sharing">Colab</a> | <a href="https://huggingface.co/spaces/haofeixu/unimatch">Demo</a> </h3>
   <div align="center"></div>
 </p>
 <p align="center">
   <a href="">
-    <img src="https://haofeixu.github.io/unimatch/resources/teaser.svg" alt="Logo" width="70%">
+    <img src="https://haofeixu.github.io/unimatch/resources/teaser.png" alt="Logo" width="70%">
   </a>
 </p>
 
@@ -30,7 +31,7 @@ A unified model for three motion and 3D perception tasks.
 </p>
 <p align="center">
   <a href="">
-    <img src="https://haofeixu.github.io/unimatch/resources/sota_compare.svg" alt="Logo" width="100%">
+    <img src="https://haofeixu.github.io/unimatch/resources/sota_compare.png" alt="Logo" width="100%">
   </a>
 </p>
 
@@ -81,7 +82,7 @@ Otherwise, you may need to change the corresponding paths in the scripts.
 
 Given an image pair or a video sequence, our code supports generating prediction results of optical flow, disparity and depth.
 
-Please refer to [scripts/gmflow_demo.sh](scripts/gmflow_demo.sh), [scripts/gmstereo_demo.sh](scripts/gmstereo_demo.sh) and [scripts/gmdepth_demo.sh](scripts/depth_demo.sh) for example usages.
+Please refer to [scripts/gmflow_demo.sh](scripts/gmflow_demo.sh), [scripts/gmstereo_demo.sh](scripts/gmstereo_demo.sh) and [scripts/gmdepth_demo.sh](scripts/gmdepth_demo.sh) for example usages.
 
 
 
@@ -121,11 +122,11 @@ and then access [http://localhost:6006](http://localhost:6006/) in your browser.
 ## Citation
 
 ```
-@article{xu2022unifying,
+@article{xu2023unifying,
   title={Unifying Flow, Stereo and Depth Estimation},
   author={Xu, Haofei and Zhang, Jing and Cai, Jianfei and Rezatofighi, Hamid and Yu, Fisher and Tao, Dacheng and Geiger, Andreas},
-  journal={arXiv preprint arXiv:2211.05783},
-  year={2022}
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
+  year={2023}
 }
 ```
 
